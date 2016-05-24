@@ -22,3 +22,26 @@ executable distributed-process-masterslave
                        distributed-process,
                        distributed-process-simplelocalnet
   extensions:          BangPatterns, CPP, TemplateHaskell
+
+executable distributed-process-simplelocalnet-mapreduce
+  main-is:             SimpleLocalnet.hs
+  other-modules:       CountWords
+                       KMeans
+                       MapReduce
+                       MonoDistrMapReduce
+                       PolyDistrMapReduce
+  hs-source-dirs:      src/MapReduce
+  build-depends:       base >=4.7 && <5,
+                       distributed-process,
+                       distributed-static,
+                       containers,
+                       bytestring,
+                       binary,
+                       array,
+                       random
+  extensions:          BangPatterns
+                       CPP
+                       KindSignatures
+                       ScopedTypeVariables
+                       TemplateHaskell
+  ghc-options:         -Wall -rtsopts -with-rtsopts=-K64M
