@@ -34,6 +34,7 @@ executable distributed-process-simplelocalnet-mapreduce
   build-depends:       base >=4.7 && <5,
                        distributed-process,
                        distributed-static,
+                       distributed-process-simplelocalnet,
                        containers,
                        bytestring,
                        binary,

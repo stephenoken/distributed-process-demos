@@ -2,13 +2,16 @@
 module CountWords
     (
       Document,
-      localCountWords
+      localCountWords,
+      distrCountWords,
+      __remoteTable
     ) where
 
 import Prelude hiding (Word)
--- import Control.Distributed.Process
+import Control.Distributed.Process
 import Control.Distributed.Process.Closure
 import MapReduce
+import MonoDistrMapReduce hiding (__remoteTable)
 
 type Document = String
 type Word = String
@@ -29,3 +32,6 @@ countWords_ :: ()-> MapReduce FilePath Document Word Frequency Frequency
 countWords_ () = countWords
 
 remotable ['countWords_]
+
+distrCountWords :: [NodeId] -> Map FilePath Document -> Process (Map Word Frequency)
+distrCountWords = distrMapReduce ($(mkClosure 'countWords_) ())
