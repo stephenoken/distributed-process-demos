@@ -1,15 +1,22 @@
 import System.Environment (getArgs)
+import System.IO
+import System.Random
+import Control.Monad
 import Control.Distributed.Process
 import Control.Distributed.Process.Node (initRemoteTable)
 import Control.Distributed.Process.Backend.SimpleLocalnet
 import Data.Map (Map)
+import Data.Array (Array, listArray)
 import qualified Data.Map as Map (fromList)
 
 import qualified CountWords
+import qualified KMeans
 import qualified MonoDistrMapReduce
+import qualified PolyDistrMapReduce
 
 rtable :: RemoteTable
-rtable = MonoDistrMapReduce.__remoteTable
+rtable = PolyDistrMapReduce.__remoteTable
+        .MonoDistrMapReduce.__remoteTable
         . CountWords.__remoteTable
         $ initRemoteTable
 main :: IO ()
@@ -30,7 +37,11 @@ main = do
         result <- CountWords.distrCountWords slave input
         liftIO $ print result
 
-
+    --Local KMeans
+    "local": "kmeans": [] -> do
+      points <- replicateM 50000 randomPoint
+      withFile "plot.data" WriteMode $ KMeans.createGnuPlot $
+        KMeans.localKMeans (arrayFromList points) (take 5 points) 5
     -- Generic slave for distributed examples
     "slave" : host : port : [] -> do
       backend <- initializeBackend host port rtable
@@ -43,3 +54,9 @@ constructInput :: [FilePath] -> IO (Map FilePath CountWords.Document)
 constructInput files = do
   contents <- mapM readFile files
   return (Map.fromList $ zip files contents)
+
+randomPoint :: IO KMeans.Point
+randomPoint = (,) <$> randomIO <*> randomIO
+
+arrayFromList :: [e] -> Array Int e
+arrayFromList xs = listArray (0, length xs - 1) xs
