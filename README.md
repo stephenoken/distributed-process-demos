@@ -11,3 +11,4 @@ Haskell Implementations
 - Run Slave `./.stack-work/dist/x86_64-osx/Cabal-1.22.5.0/build/distributed-process-simplelocalnet-mapreduce/distributed-process-simplelocalnet-mapreduce slave "127.0.0.1" 8001`
 - Run Master `./.stack-work/dist/x86_64-osx/Cabal-1.22.5.0/build/distributed-process-simplelocalnet-mapreduce/distributed-process-simplelocalnet-mapreduce master localhost 8000 count ./text/Somme.txt`
 ### Poly Distributed Map Reduce
+- Run Master `./.stack-work/dist/x86_64-osx/Cabal-1.22.5.0/build/distributed-process-simplelocalnet-mapreduce/distributed-process-simplelocalnet-mapreduce master localhost 8000 kmeans`

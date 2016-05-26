@@ -5,16 +5,22 @@ module KMeans
     Point,
     Cluster,
     localKMeans,
-    createGnuPlot
+    distrKMeans,
+    createGnuPlot,
+    __remoteTable
     ) where
 
 import Data.List (minimumBy)
 import Data.Function (on)
 import Data.Array (Array,(!), bounds)
 import System.IO
+import Control.Distributed.Process
+import Control.Distributed.Process.Closure
 import qualified Data.Map as Map (fromList, elems, toList, size)
+import Debug.Trace
 
 import MapReduce
+import PolyDistrMapReduce hiding (__remoteTable)
 
 type Point = (Double,Double)
 type Cluster = (Double,Double)
@@ -35,7 +41,7 @@ centre :: [Point] -> Point
 centre ps = let (xs,ys) = unzip ps in (average xs, average ys)
 
 kmeans :: Array Int Point ->  MapReduce (Int,Int) [Cluster] Cluster Point ([Point],Point)
-kmeans  points  = MapReduce{
+kmeans  points  = trace "Hello" MapReduce{
   mrMap = \(lo,hi) cs -> [let p = points ! i in (nearest p cs,p)
                          | i <- [lo..hi]
                          ],
@@ -58,6 +64,45 @@ localKMeans points cs iterations = go (iterations - 1)
     trivialSegmentation :: [Cluster] -> Map (Int, Int) [Cluster]
     trivialSegmentation cs' = Map.fromList [(bounds points, cs')]
 
+dictIn :: SerializableDict ((Int, Int), [Cluster])
+dictIn = SerializableDict
+
+dictOut :: SerializableDict [(Cluster, Point)]
+dictOut = SerializableDict
+
+remotable ['kmeans, 'dictIn, 'dictOut]
+
+distrKMeans :: Array Int Point
+  ->[Cluster]
+  ->[NodeId]
+  ->Int
+  -> Process(Map Cluster ([Point],Point))
+distrKMeans points cs mappers iterations = distrMapReduce $(mkStatic 'dictIn)
+  $(mkStatic 'dictOut)($(mkClosure 'kmeans)points)
+  mappers (go (iterations -1))
+  where
+    go::Int
+      -> (Map (Int, Int) [Cluster] -> Process (Map Cluster ([Point], Point)))
+      -> Process (Map Cluster ([Point], Point))
+    go 0 iteration = iteration (Map.fromList $ map (,cs) segments)
+    go n iteration = do
+      clusters <- go (n-1) iteration
+      let centres = map snd $ Map.elems clusters
+      iteration (Map.fromList $ map (, centres)segments)
+    segments :: [(Int,Int)]
+    segments = let (lo,_) = bounds points in dividePoints numPoints lo
+
+    dividePoints :: Int -> Int -> [(Int, Int)]
+    dividePoints pointsLeft offset
+      | pointsLeft <= pointsPerMapper = [(offset,offset+pointsLeft -1)]
+      | otherwise = let offset' = offset + pointsPerMapper in
+        (offset,offset'-1): dividePoints (pointsLeft - pointsPerMapper) offset'
+
+    pointsPerMapper :: Int
+    pointsPerMapper = ceiling (toRational numPoints/ toRational (length mappers))
+
+    numPoints :: Int
+    numPoints = let (lo, hi) = bounds points in hi - lo + 1
   -- | Create a gnuplot data file for the output of the k-means algorithm
   --
   -- To plot the data, use

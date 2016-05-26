@@ -14,7 +14,6 @@ import Control.Distributed.Process.Serializable (Serializable)
 import Control.Distributed.Process.Closure
 import Control.Distributed.Static (closureApply, staticCompose, staticApply)
 import MapReduce (MapReduce(..), reducePerKey, groupByKey)
-import Debug.Trace
 
 matchDict :: forall a b. SerializableDict a -> (a -> Process b) -> Match b
 matchDict SerializableDict = match
@@ -75,7 +74,7 @@ distrMapReduce :: forall k1 k2 v1 v2 v3 a.
                -> [NodeId]
                -> ((Map k1 v1 -> Process (Map k2 v3)) -> Process a)
                -> Process a
-distrMapReduce dictIn dictOut mr mappers p = do
+distrMapReduce dictIn dictOut mr mappers p =  do
   mr' <- unClosure mr
   master <- getSelfPid
 

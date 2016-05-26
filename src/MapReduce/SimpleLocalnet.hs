@@ -16,7 +16,8 @@ import qualified PolyDistrMapReduce
 
 rtable :: RemoteTable
 rtable = PolyDistrMapReduce.__remoteTable
-        .MonoDistrMapReduce.__remoteTable
+        . MonoDistrMapReduce.__remoteTable
+        . KMeans.__remoteTable
         . CountWords.__remoteTable
         $ initRemoteTable
 main :: IO ()
@@ -42,6 +43,15 @@ main = do
       points <- replicateM 50000 randomPoint
       withFile "plot.data" WriteMode $ KMeans.createGnuPlot $
         KMeans.localKMeans (arrayFromList points) (take 5 points) 5
+
+    --Distributed KMeans
+    "master" : host : port :  "kmeans" : [] -> do
+      points  <- replicateM 50000 randomPoint
+      backend <- initializeBackend host port rtable
+      startMaster backend $ \slaves -> do
+        result <- KMeans.distrKMeans (arrayFromList points) (take 5 points) slaves 5
+        liftIO $ withFile "plot.data" WriteMode $ KMeans.createGnuPlot result
+
     -- Generic slave for distributed examples
     "slave" : host : port : [] -> do
       backend <- initializeBackend host port rtable
