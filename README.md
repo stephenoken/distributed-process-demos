@@ -12,3 +12,6 @@ Haskell Implementations
 - Run Master `./.stack-work/dist/x86_64-osx/Cabal-1.22.5.0/build/distributed-process-simplelocalnet-mapreduce/distributed-process-simplelocalnet-mapreduce master localhost 8000 count ./text/Somme.txt`
 ### Poly Distributed Map Reduce
 - Run Master `./.stack-work/dist/x86_64-osx/Cabal-1.22.5.0/build/distributed-process-simplelocalnet-mapreduce/distributed-process-simplelocalnet-mapreduce master localhost 8000 kmeans`
+
+## References
+- https://github.com/haskell-distributed/distributed-process-demos
